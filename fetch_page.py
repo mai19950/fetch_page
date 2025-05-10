@@ -4,6 +4,7 @@ import random
 import json
 import string
 import sys
+import os
 import requests
 import urllib.parse
 from selenium import webdriver
@@ -210,7 +211,7 @@ def main():
   filepath = 'data.json'
   const = "constant.json"
   data = []
-  flag = False
+  updates = []
   try:
     with open(filepath, "rb") as f:
       data = json.load(f)
@@ -228,15 +229,20 @@ def main():
       with requests.get(page_it.get("link", ""), timeout=10, headers={"user-agent": "v2rayNG/1.8.3"}) as res:
         res.raise_for_status()
     except:
-      flag = True
+      updates.append(page)
       instance = globals()[item["class"]](url, cookie=item["cookie"]).main()
       page_it["page"] = page
       page_it["link"] = instance.link
       page_it["time"] = instance.time
 
-  if flag:
+  if updates:
     with open(filepath, "w+", encoding="utf-8") as f:
       json.dump(data, f, ensure_ascii=False, indent=4)
+    commit_msg_part = ", ".join(updates)
+    github_output_path = os.environ.get("GITHUB_OUTPUT")
+    if github_output_path:
+      with open(github_output_path, 'a', encoding="utf-8") as f:
+        f.write(f"updated_pages={commit_msg_part}\n")
 
 
 if __name__ == "__main__":

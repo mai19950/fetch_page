@@ -29,6 +29,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: 运行 Python 脚本
+        id: run_script
         run: python fetch_page.py
 
       - name: 检查文件是否有更改
@@ -51,7 +52,13 @@ jobs:
           export TZ='Asia/Shanghai'
           TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
           git add .
-          git commit -m "Automated: Update data.json at ${TIMESTAMP}"
+          UPDATED_PAGES="${{ steps.run_script.outputs.updated_pages }}"
+          if [ -z "$UPDATED_PAGES" ]; then
+            COMMIT_MSG="Automated: Update data.json at ${TIMESTAMP}"
+          else
+            COMMIT_MSG="Automated: Update data.json [${UPDATED_PAGES}] at ${TIMESTAMP}"
+          fi
+          git commit -m "${COMMIT_MSG}"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
