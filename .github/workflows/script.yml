@@ -35,12 +35,12 @@ jobs:
       - name: 检查文件是否有更改
         id: git_status
         run: |
-          if git diff --quiet --exit-code -- data.json; then
+          if git diff --quiet --exit-code -- data.yaml; then
             echo "modified=false" >> $GITHUB_OUTPUT
-            echo "data.json 没有修改。"
+            echo "data.yaml 没有修改。"
           else
             echo "modified=true" >> $GITHUB_OUTPUT
-            echo "data.json 已被修改。"
+            echo "data.yaml 已被修改。"
           fi
         shell: bash
 
@@ -54,9 +54,9 @@ jobs:
           git add .
           UPDATED_PAGES="${{ steps.run_script.outputs.updated_pages }}"
           if [ -z "$UPDATED_PAGES" ]; then
-            COMMIT_MSG="Automated: Update data.json at ${TIMESTAMP}"
+            COMMIT_MSG="Automated: Update data.yaml at ${TIMESTAMP}"
           else
-            COMMIT_MSG="Automated: Update data.json [${UPDATED_PAGES}] at ${TIMESTAMP}"
+            COMMIT_MSG="Automated: Update data.yaml [${UPDATED_PAGES}] at ${TIMESTAMP}"
           fi
           git commit -m "${COMMIT_MSG}"
           git push

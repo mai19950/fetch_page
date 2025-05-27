@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import random
-import json
+import yaml
 import string
 import sys
 import os
@@ -208,17 +208,17 @@ class FetchVpnea(FetchTuiJian):
 
 
 def main():
-  filepath = 'data.json'
-  const = "constant.json"
+  filepath = 'data.yaml'
+  const = "constant.yaml"
   data = []
   updates = []
   try:
     with open(filepath, "rb") as f:
-      data = json.load(f)
+      data = yaml.safe_load(f)
   except:
     pass
   with open(const, "rb") as f:
-    page_data = json.load(f)
+    page_data = yaml.safe_load(f)
   for item in page_data:
     url, page = item["url"], item["page"]
     page_it = next((d for d in data if d["page"] == page), None)
@@ -237,7 +237,8 @@ def main():
 
   if updates:
     with open(filepath, "w+", encoding="utf-8") as f:
-      json.dump(data, f, ensure_ascii=False, indent=4)
+      # json.dump(data, f, ensure_ascii=False, indent=4)
+      yaml.safe_dump(data, f, allow_unicode=True, default_flow_style=False)
     commit_msg_part = ", ".join(updates)
     github_output_path = os.environ.get("GITHUB_OUTPUT")
     if github_output_path:
