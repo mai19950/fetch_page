@@ -7,6 +7,8 @@ import sys
 import os
 import requests
 import urllib.parse
+import pytz
+from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -240,10 +242,11 @@ def main():
       # json.dump(data, f, ensure_ascii=False, indent=4)
       yaml.safe_dump(data, f, allow_unicode=True, default_flow_style=False)
     commit_msg_part = ", ".join(updates)
+    current_time = datetime.now(pytz.timezone("Asia/Shanghai")).strftime("%Y-%m-%d %H:%M:%S")
     github_output_path = os.environ.get("GITHUB_OUTPUT")
     if github_output_path:
       with open(github_output_path, 'a', encoding="utf-8") as f:
-        f.write(f"updated_pages={commit_msg_part}\n")
+        f.write(f"pages_msg=Update data.yaml {commit_msg_part} at {current_time}\n")
 
 
 if __name__ == "__main__":
