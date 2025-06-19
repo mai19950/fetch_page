@@ -28,37 +28,51 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: 运行 Python 脚本
-        id: run_script
+      - name: 检查文件更新时间
+        id: check_file
+        run: |
+          # 获取文件最后一次提交时间（秒）
+          last_commit_ts=$(git log -1 --format=%ct -- proxy_ip.yml)
+          now_ts=$(date +%s)
+          diff=$((now_ts - last_commit_ts))
+          if [ $diff -le 1800 ]; then
+            echo "changed_within_1h=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed_within_1h=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 运行 Fetch_Page 脚本
+        id: fetch_page
         run: python fetch_page.py
 
-      - name: 检查文件是否有更改
-        id: git_status
-        run: |
-          if git diff --quiet --exit-code -- data.yaml; then
-            echo "modified=false" >> $GITHUB_OUTPUT
-            echo "data.yaml 没有修改。"
-          else
-            echo "modified=true" >> $GITHUB_OUTPUT
-            echo "data.yaml 已被修改。"
-          fi
-        shell: bash
+      - name: 运行 Fetch_IP 脚本
+        id: fetch_ip
+        if: steps.check_file.outputs.changed_within_1h == 'false'
+        run: python fetch_ihuan_ip.py
 
       - name: 提交并推送更改
-        if: steps.git_status.outputs.modified == 'true'
         run: |
           git config user.name 'mai19950'
           git config user.email 'underdog-95@outlook.com'
-          export TZ='Asia/Shanghai'
-          TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
-          git add .
-          UPDATED_PAGES="${{ steps.run_script.outputs.updated_pages }}"
-          if [ -z "$UPDATED_PAGES" ]; then
-            COMMIT_MSG="Automated: Update data.yaml at ${TIMESTAMP}"
+
+          PAGES_MSG="${{ steps.fetch_page.outputs.pages_msg || '' }}"
+          PROXY_MSG="${{ steps.fetch_ip.outputs.proxy_msg || '' }}"
+
+          if [ -n "$PAGES_MSG" ]; then
+            COMMIT_MSG="$PAGES_MSG"
+          elif [ -n "$PROXY_MSG" ]; then
+            COMMIT_MSG="$PROXY_MSG"
           else
-            COMMIT_MSG="Automated: Update data.yaml [${UPDATED_PAGES}] at ${TIMESTAMP}"
+            echo "未检测到有效的提交消息，跳过提交。"
+            exit 0
           fi
-          git commit -m "${COMMIT_MSG}"
-          git push
+
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .
+            git commit -m "$COMMIT_MSG"
+            git push
+          else
+            echo "工作区没有变更，跳过提交。"
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

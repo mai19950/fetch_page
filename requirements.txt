@@ -2,3 +2,7 @@ selenium
 requests
 webdriver-manager
 pyyaml
+pytz
+python-dotenv
+aiofiles
+aiohttp
